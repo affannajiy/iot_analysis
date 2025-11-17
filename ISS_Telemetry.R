@@ -5,6 +5,7 @@ list.files()
 #Libraries
 library(dplyr)
 library(ggplot2)
+library(leaflet) #for map
 
 #Import Data
 iss <- read.csv("ISS_Telemetry_Data.csv")
@@ -12,6 +13,7 @@ iss <- read.csv("ISS_Telemetry_Data.csv")
 #Adjustments
 colnames(iss) <- c("id", "latitude", "longitude", "altitude", "velocity", "timestamp", "fetched_at")
 iss$time <- as.POSIXct(iss$timestamp, origin = "1970-01-01", tz = "UTC")
+iss$day <- format(iss$time, "%d/%m")
 
 iss_velocity <- data.frame(velocity = iss$velocity, time = iss$time)
 iss_altitude <- data.frame(altitude = iss$altitude, time = iss$time)
@@ -53,3 +55,30 @@ ggplot(iss_lati_long, aes(x = time)) +
   theme_minimal() +
   scale_x_datetime(date_breaks = "1 day", date_labels = "%m/%d") +
   scale_color_manual(values = c("Latitude" = "green", "Longitude" = "blue"))
+
+#Plot Map
+#Downsample
+iss_13nov <- iss %>%
+  filter(day == "13/11") %>% # ← ONLY 13 November
+  filter(!is.na(latitude) & !is.na(longitude)) %>%
+  slice(seq(1, n(), by = 30))
+
+map_13nov <- leaflet(iss_13nov) %>%
+  addTiles() %>%  # OpenStreetMap background
+  addPolylines(lng = ~longitude, 
+               lat = ~latitude,
+               color = "red", #red for 13/11
+               weight = 3, 
+               opacity = 0.9) %>%
+  addCircleMarkers(lng = ~longitude[1], lat = ~latitude[1],
+                   radius = 6, color = "black", fillColor = "yellow",
+                   popup = "START: 13 Nov") %>%
+  addLegend(position = "bottomright",
+            colors = "red",
+            labels = "ISS Path – 13 November 2025",
+            title = "Ground Track") %>%
+  addScaleBar(position = "bottomleft") %>%
+  addMiniMap()
+
+#Save as HTML
+htmlwidgets::saveWidget(map_13nov, "ISS_Path_13Nov_Only.html", selfcontained = TRUE)
