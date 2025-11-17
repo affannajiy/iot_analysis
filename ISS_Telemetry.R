@@ -3,6 +3,9 @@ setwd("C:/Users/AFFAN/Documents/GitHub/iot_analysis")
 list.files()
 
 #Libraries
+webshot::install_phantomjs()
+
+library(webshot)
 library(dplyr)
 library(ggplot2)
 library(leaflet) #for map
@@ -82,3 +85,10 @@ map_13nov <- leaflet(iss_13nov) %>%
 
 #Save as HTML
 htmlwidgets::saveWidget(map_13nov, "ISS_Path_13Nov_Only.html", selfcontained = TRUE)
+
+#Skirinshot
+webshot("ISS_Path_13Nov_Only.html", 
+        file = "ISS_Path_13Nov_Report.png",
+        zoom = 2,           # makes it sharp
+        vwidth = 1400,      # nice wide image
+        vheight = 800)
